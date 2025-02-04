@@ -38,6 +38,42 @@ String MeetCom::getResponse() {
     return "";
 }
 
+MeetComResponse MeetCom::parseResponse(String response) {
+    MeetComResponse result;
+    
+    // Check minimum length for valid response
+    if (response.length() < 4) {
+        return result;
+    }
+    
+    // Parse command type
+    result.cmdType = response.charAt(0);
+    
+    // Parse module ID (assuming hex format)
+    String moduleIdStr = response.substring(1, 3);
+    result.moduleId = (byte)strtol(moduleIdStr.c_str(), NULL, 16);
+    
+    // Parse function code
+    if (response.length() >= 5) {
+        String functionStr = response.substring(3, 5);
+        result.function = (byte)strtol(functionStr.c_str(), NULL, 16);
+    }
+    
+    // Parse payload length and payload if present
+    if (response.length() >= 7) {
+        String payloadLenStr = response.substring(5, 7);
+        result.payloadLen = (byte)strtol(payloadLenStr.c_str(), NULL, 16);
+        
+        if (response.length() >= 7 + result.payloadLen) {
+            result.payload = response.substring(7, 7 + result.payloadLen);
+            result.isValid = true;
+        }
+    }
+    
+    return result;
+}
+
+
 void MeetCom::sendPacket(char cmdType, byte moduleId, byte function, byte payloadLen, String payload) {
     String packet = String(cmdType);
     packet += String(moduleId, HEX);
